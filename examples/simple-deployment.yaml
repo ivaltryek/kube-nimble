@@ -6,3 +6,6 @@ metadata:
 spec:
   deployment:
     image: nginx:stable
+    labels:
+      app: nginx
+      env: test

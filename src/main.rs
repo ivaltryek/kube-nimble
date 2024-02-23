@@ -1,4 +1,5 @@
 use std::sync::Arc;
+mod common;
 mod controllers;
 mod crds;
 use kube::{Api, Client};
