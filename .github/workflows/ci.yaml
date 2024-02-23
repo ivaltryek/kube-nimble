@@ -44,7 +44,7 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: "${{env.IMAGE_NAME}}:${{env.TAG_NAME}}, ${{IMAGE_NAME}}:latest"
+          tags: "${{env.IMAGE_NAME}}:${{env.TAG_NAME}}, ${{env.IMAGE_NAME}}:latest"
           labels: |
             org.opencontainers.image.licenses=Apache
             org.opencontainers.image.created=${{env.DATE}}
