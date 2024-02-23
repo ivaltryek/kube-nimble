@@ -46,11 +46,12 @@ jobs:
           push: true
           tags: "${IMAGE_NAME}:${env.TAG_NAME}, ${IMAGE_NAME}:latest"
           labels: |
-            - org.opencontainers.image.licenses=Apache
-            - org.opencontainers.image.created=${env.DATE}
-            - org.opencontainers.image.revision=${env.REVISION}
-            - org.opencontainers.image.source=https://github.com/ivaltryek/kube-nimble
-            - org.opencontainers.image.title=kube-nimble
-            - org.opencontainers.image.version=${env.TAG_NAME}
-          outputs: annotation-index.org.opencontainers.image.description=Rust based Kubernetes Operator to deploy K8s objects minimally.
+            org.opencontainers.image.licenses=Apache
+            org.opencontainers.image.created=${env.DATE}
+            org.opencontainers.image.revision=${env.REVISION}
+            org.opencontainers.image.source=https://github.com/ivaltryek/kube-nimble
+            org.opencontainers.image.title=kube-nimble
+            org.opencontainers.image.version=${env.TAG_NAME}
+          annotations: |
+            org.opencontainers.image.description=Rust based Kubernetes Operator to deploy K8s objects minimally.
 
