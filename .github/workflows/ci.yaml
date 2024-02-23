@@ -1,0 +1,56 @@
+name: kube-nimble CI
+
+on:
+  release:
+    types:
+      - created
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/ivaltryek/kube-nimble
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set env vars
+        run: |
+          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "DATE=$(date --rfc-3339=seconds)" >> $GITHUB_ENV
+          echo "REVISION=$(git rev-parse HEAD)" >> $GITHUB_ENV
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: latest
+      - name: Available platforms
+        run: echo ${{ steps.buildx.outputs.platforms }} && docker version
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: "${IMAGE_NAME}:${env.TAG_NAME}, ${IMAGE_NAME}:latest"
+          labels: |
+            - org.opencontainers.image.licenses=Apache
+            - org.opencontainers.image.created=${env.DATE}
+            - org.opencontainers.image.revision=${env.REVISION}
+            - org.opencontainers.image.source=https://github.com/ivaltryek/kube-nimble
+            - org.opencontainers.image.title=kube-nimble
+            - org.opencontainers.image.version=${env.TAG_NAME}
+          outputs: annotation-index.org.opencontainers.image.description=Rust based Kubernetes Operator to deploy K8s objects minimally.
+
