@@ -1,0 +1,8 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo
+  namespace: test
+spec:
+  deployment:
+    image: nginx:stable

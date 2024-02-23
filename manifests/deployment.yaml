@@ -1,0 +1,39 @@
+# https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kube-nimble
+  namespace: default
+  labels:
+    app: kube-nimble
+spec:
+  selector:
+    matchLabels:
+      app: kube-nimble
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container:  kube-nimble
+      labels:
+        app: kube-nimble
+    spec:
+      serviceAccountName: kube-nimble
+      containers:
+      - name: kube-nimble
+        image: itsmj86/kube-nimble
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+---
+
