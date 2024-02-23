@@ -19,4 +19,5 @@ pub struct NimbleSpec {
 pub struct DeploySpec {
     pub image: String,
     pub replicas: i32,
+    pub labels: serde_json::Value,
 }

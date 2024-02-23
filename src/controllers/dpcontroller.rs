@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, sync::Arc};
+use std::sync::Arc;
 
 use k8s_openapi::{
     api::{
@@ -13,7 +13,7 @@ use kube::{
     Api, Resource,
 };
 
-use crate::crds::nimble::Nimble;
+use crate::{common::helper::json_obj_to_btreemap, crds::nimble::Nimble};
 
 use super::client::{error_policy, ContextData, Error};
 
@@ -27,10 +27,10 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
     let client = &ctx.client;
 
     let oref = nimble.controller_owner_ref(&()).unwrap();
-    let mut labels: BTreeMap<String, String> = BTreeMap::new();
 
-    // TODO: make labels dynamic.
-    labels.insert("app".to_owned(), "default".to_owned());
+    let container_name = nimble.metadata.name.clone().unwrap_or("default".to_owned());
+
+    let labels = json_obj_to_btreemap(nimble.spec.deployment.labels.clone());
 
     let deployment: Deployment = Deployment {
         metadata: ObjectMeta {
@@ -47,8 +47,7 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
             template: PodTemplateSpec {
                 spec: Some(PodSpec {
                     containers: vec![Container {
-                        // TODO: change container name to dynamic!
-                        name: "default".to_owned(),
+                        name: container_name.clone(),
                         image: Some(nimble.spec.deployment.image.clone()),
                         ..Container::default()
                     }],
