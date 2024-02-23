@@ -26,7 +26,7 @@ spec:
       serviceAccountName: kube-nimble
       containers:
       - name: kube-nimble
-        image: itsmj86/kube-nimble
+        image: ghcr.io/ivaltryek/kube-nimble:v0.1.0
         imagePullPolicy: IfNotPresent
         resources:
           requests:
