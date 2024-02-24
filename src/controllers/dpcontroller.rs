@@ -94,8 +94,11 @@ pub async fn run_dp_controller(crd_api: Api<Nimble>, context: Arc<ContextData>) 
         .run(reconcile, error_policy, context)
         .for_each(|reconcilation_result| async move {
             match reconcilation_result {
-                Ok(nimble_resource) => {
-                    info!("Reconciliation successful. Resource: {:?}", nimble_resource);
+                Ok((nimble_resource, _)) => {
+                    info!(msg = "Reconciliation successful.",
+                    resource_name = ?nimble_resource.name,
+                    namespace = ?nimble_resource.namespace.unwrap(),
+                    );
                 }
                 Err(reconciliation_err) => {
                     error!("Reconciliation error: {:?}", reconciliation_err)
