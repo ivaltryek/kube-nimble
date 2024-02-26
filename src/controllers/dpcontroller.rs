@@ -13,9 +13,9 @@ use kube::{
     Api, Resource,
 };
 
-use crate::{common::helper::json_obj_to_btreemap, crds::nimble::Nimble};
+use crate::crds::nimble::Nimble;
 
-use super::client::{error_policy, ContextData, Error};
+use crate::common::client::{error_policy, ContextData, Error};
 
 use tokio::time::Duration;
 
@@ -23,6 +23,24 @@ use futures::StreamExt;
 
 use tracing::{error, info};
 
+/**
+ * Reconciles the deployment of a Nimble instance.
+ *
+ * This function orchestrates the deployment of a Nimble instance based on the provided context data.
+ * It creates or updates a Kubernetes Deployment object with the specified configuration.
+ *
+ * # Arguments
+ * - `nimble`: An Arc reference to the Nimble instance to reconcile.
+ * - `ctx`: An Arc reference to the context data needed for reconciliation.
+ *
+ * # Returns
+ * An Ok(Action) containing the requeue action with a specified duration on successful reconciliation,
+ * or an Err(Error) if the reconciliation process encounters any errors.
+ *
+ * # Errors
+ * - Returns an Error::MissingObjectKey if required object keys are missing.
+ * - Returns an Error::NimbleObjectCreationFailed if the creation or update of the Nimble object fails.
+ */
 pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Action, Error> {
     let client = &ctx.client;
 
@@ -30,12 +48,13 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
 
     let container_name = nimble.metadata.name.clone().unwrap_or("default".to_owned());
 
-    let labels = json_obj_to_btreemap(nimble.spec.deployment.labels.clone());
+    let labels = &nimble.spec.deployment.labels;
 
     let deployment: Deployment = Deployment {
         metadata: ObjectMeta {
             name: nimble.metadata.name.clone(),
             owner_references: Some(vec![oref]),
+            annotations: nimble.spec.deployment.annotations.clone(),
             ..ObjectMeta::default()
         },
         spec: Some(DeploymentSpec {
@@ -55,6 +74,7 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
                 }),
                 metadata: Some(ObjectMeta {
                     labels: Some(labels.clone()),
+                    annotations: nimble.spec.deployment.annotations.clone(),
                     ..ObjectMeta::default()
                 }),
             },
@@ -88,6 +108,27 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
     Ok(Action::requeue(Duration::from_secs(30)))
 }
 
+/**
+ * Starts the main loop for the Nimble Deployment controller.
+ *
+ * This function initiates the main event loop for the Nimble controller, responsible for monitoring and reconciling Nimble resources in the Kubernetes cluster.
+ *
+ * Args:
+ * - crd_api (Api<Nimble>): Reference to the Kubernetes API client for Nimble resources.
+ * - context (Arc<ContextData>): Reference-counted handle to the controller context data.
+ *
+ * Returns:
+ * - Future: Represents the completion of the controller loop.
+ *
+ * Process:
+ * 1. Creates a new controller instance using the provided API client and default configuration.
+ * 2. Configures the controller to shut down gracefully on receiving specific signals.
+ * 3. Starts the controller loop, running the `reconcile` function for each Nimble resource change it detects.
+ * 4. Within the loop, handles reconciliation results:
+ *   - On success: logs a message with resource information.
+ *   - On error: logs an error message with details.
+ * 5. Waits for the loop to complete.
+ */
 pub async fn run_dp_controller(crd_api: Api<Nimble>, context: Arc<ContextData>) {
     Controller::new(crd_api.clone(), Config::default())
         .shutdown_on_signal()
@@ -95,13 +136,13 @@ pub async fn run_dp_controller(crd_api: Api<Nimble>, context: Arc<ContextData>) 
         .for_each(|reconcilation_result| async move {
             match reconcilation_result {
                 Ok((nimble_resource, _)) => {
-                    info!(msg = "Reconciliation successful.",
+                    info!(msg = "Deployment reconciliation successful.",
                     resource_name = ?nimble_resource.name,
                     namespace = ?nimble_resource.namespace.unwrap(),
                     );
                 }
                 Err(reconciliation_err) => {
-                    error!("Reconciliation error: {:?}", reconciliation_err)
+                    error!("Deployment reconciliation error: {:?}", reconciliation_err)
                 }
             }
         })

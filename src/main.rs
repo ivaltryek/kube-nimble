@@ -5,10 +5,9 @@ mod crds;
 use kube::{Api, Client};
 use tracing::info;
 
-use crate::{
-    controllers::{client::ContextData, dpcontroller::run_dp_controller},
-    crds::nimble::Nimble,
-};
+use crate::common::client::ContextData;
+use crate::controllers::dpcontroller::run_dp_controller;
+use crate::crds::nimble::Nimble;
 
 #[tokio::main]
 async fn main() {
