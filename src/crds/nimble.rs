@@ -18,8 +18,8 @@ pub struct NimbleSpec {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
 pub struct DeploySpec {
-    #[doc = "Container image to use for the deployment."]
-    pub image: String,
+    #[doc = "Containers to in the deployment."]
+    pub containers: Vec<ContainerSpec>,
     #[doc = "Number of desired replicas for the deployment."]
     #[serde(default = "default_replicas")]
     pub replicas: i32,
@@ -30,6 +30,15 @@ pub struct DeploySpec {
     pub annotations: Option<BTreeMap<String, String>>,
 }
 
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
+pub struct ContainerSpec {
+    #[doc = "Name of the container."]
+    pub name: String,
+    #[doc = "Image to use for a container."]
+    pub image: String,
+    #[doc = "override entrypoint command for a container."]
+    pub command: Option<Vec<String>>,
+}
 /**
  * This function returns the default value for the number of replicas.
  * In this specific case, the default is set to 1.

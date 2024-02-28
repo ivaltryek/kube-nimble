@@ -13,7 +13,7 @@ use kube::{
     Api, Resource,
 };
 
-use crate::crds::nimble::Nimble;
+use crate::crds::nimble::{ContainerSpec, Nimble};
 
 use crate::common::client::{error_policy, ContextData, Error};
 
@@ -22,6 +22,24 @@ use tokio::time::Duration;
 use futures::StreamExt;
 
 use tracing::{error, info};
+
+/// Transforms struct `ContainerSpec` to `Container` Vec that is required in `PodSpec`
+/// Returns Vec of `Container`.
+/// # Arguments
+/// * `container_spec` - A Vec of `ContainerSpec`
+pub fn transform_containers(container_spec: Vec<ContainerSpec>) -> Vec<Container> {
+    let containers: Vec<Container> = container_spec
+        .iter()
+        .map(|spec| Container {
+            name: spec.name.clone(),
+            image: Some(spec.image.clone()),
+            command: spec.command.clone(),
+            ..Container::default()
+        })
+        .collect();
+
+    containers
+}
 
 /**
  * Reconciles the deployment of a Nimble instance.
@@ -46,9 +64,9 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
 
     let oref = nimble.controller_owner_ref(&()).unwrap();
 
-    let container_name = nimble.metadata.name.clone().unwrap_or("default".to_owned());
-
     let labels = &nimble.spec.deployment.labels;
+
+    let containers = transform_containers(nimble.spec.deployment.containers.clone());
 
     let deployment: Deployment = Deployment {
         metadata: ObjectMeta {
@@ -65,11 +83,7 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
             },
             template: PodTemplateSpec {
                 spec: Some(PodSpec {
-                    containers: vec![Container {
-                        name: container_name.clone(),
-                        image: Some(nimble.spec.deployment.image.clone()),
-                        ..Container::default()
-                    }],
+                    containers,
                     ..PodSpec::default()
                 }),
                 metadata: Some(ObjectMeta {
