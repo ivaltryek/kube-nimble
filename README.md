@@ -19,6 +19,8 @@ If the operator initializes without encountering any errors, then you have succe
     - This objects is created in namespace test; if it does not exist use `kubectl create ns test`
     - to apply the object: `kubectl create -f examples/simple-deployment.yaml`
 
+## API Reference 
+https://ivaltryek.github.io/kube-nimble/
 
 ## Development
    To develop this project locally, just follow the steps that is mentioned in [run locally on linux](#Steps-to-run-locally-on-linux)
