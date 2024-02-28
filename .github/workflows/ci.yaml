@@ -1,9 +1,9 @@
 name: kube-nimble CI
 
 on:
-  release:
-    types:
-      - created
+  push:
+    tags:
+      - 'v0.*'
   workflow_dispatch:
 
 env:
@@ -18,7 +18,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Set env vars
         run: |
-          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          echo "TAG_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
           echo "DATE=$(date --rfc-3339=seconds)" >> $GITHUB_ENV
           echo "REVISION=$(git rev-parse HEAD)" >> $GITHUB_ENV
       - name: Set up QEMU
@@ -54,4 +54,22 @@ jobs:
             org.opencontainers.image.version=${{env.TAG_NAME}}
           annotations: |
             org.opencontainers.image.description=Rust based Kubernetes Operator to deploy K8s objects minimally.
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - name: cargo build
+        run: |
+          cargo build --release --all-features
+      - name: generate CRD spec
+        run: |
+          mkdir -p crdspec
+          chmod +x target/release/crdgen
+          target/release/crdgen > crdspec/nimble.ivaltryek.github.com.yaml
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: crdspec/*
+          draft: true
+          fail_on_unmatched_files: true
+
 
