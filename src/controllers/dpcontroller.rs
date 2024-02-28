@@ -1,11 +1,11 @@
-use std::sync::Arc;
+use std::{collections::BTreeMap, sync::Arc};
 
 use k8s_openapi::{
     api::{
         apps::v1::{Deployment, DeploymentSpec},
-        core::v1::{Container, PodSpec, PodTemplateSpec},
+        core::v1::{Container, PodSpec, PodTemplateSpec, ResourceRequirements},
     },
-    apimachinery::pkg::apis::meta::v1::LabelSelector,
+    apimachinery::pkg::{api::resource::Quantity, apis::meta::v1::LabelSelector},
 };
 use kube::{
     api::{ObjectMeta, Patch, PatchParams},
@@ -34,6 +34,26 @@ pub fn transform_containers(container_spec: Vec<ContainerSpec>) -> Vec<Container
             name: spec.name.clone(),
             image: Some(spec.image.clone()),
             command: spec.command.clone(),
+            resources: Some(ResourceRequirements {
+                requests: Some(BTreeMap::from([
+                    (
+                        "memory".to_owned(),
+                        Quantity(spec.memory_request.clone().unwrap()),
+                    ),
+                    (
+                        "cpu".to_owned(),
+                        Quantity(spec.cpu_request.clone().unwrap()),
+                    ),
+                ])),
+                limits: Some(BTreeMap::from([
+                    (
+                        "memory".to_owned(),
+                        Quantity(spec.memory_limit.clone().unwrap()),
+                    ),
+                    ("cpu".to_owned(), Quantity(spec.cpu_limit.clone().unwrap())),
+                ])),
+                ..ResourceRequirements::default()
+            }),
             ..Container::default()
         })
         .collect();

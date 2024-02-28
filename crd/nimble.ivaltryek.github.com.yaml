@@ -40,8 +40,24 @@ spec:
                             type: string
                           nullable: true
                           type: array
+                        cpuLimit:
+                          description: cpu limit for a container.
+                          nullable: true
+                          type: string
+                        cpuRequest:
+                          description: cpu request for a container.
+                          nullable: true
+                          type: string
                         image:
                           description: Image to use for a container.
+                          type: string
+                        memoryLimit:
+                          description: memory limit for a container.
+                          nullable: true
+                          type: string
+                        memoryRequest:
+                          description: memory request for a container.
+                          nullable: true
                           type: string
                         name:
                           description: Name of the container.
