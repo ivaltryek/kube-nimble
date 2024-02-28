@@ -5,7 +5,12 @@ metadata:
   namespace: test
 spec:
   deployment:
-    image: nginx:stable
+    containers:
+      - image: nginx:stable
+        name: nginx-stable
+      - image: busybox
+        name: busybox
+        command: ["/bin/sh", "-c", "sleep 1000"]
     labels:
       app: nginx
       env: test

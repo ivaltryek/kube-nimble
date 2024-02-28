@@ -30,9 +30,27 @@ spec:
                     description: Annotations to be applied to the deployment and its pods.
                     nullable: true
                     type: object
-                  image:
-                    description: Container image to use for the deployment.
-                    type: string
+                  containers:
+                    description: Containers to in the deployment.
+                    items:
+                      properties:
+                        command:
+                          description: override entrypoint command for a container.
+                          items:
+                            type: string
+                          nullable: true
+                          type: array
+                        image:
+                          description: Image to use for a container.
+                          type: string
+                        name:
+                          description: Name of the container.
+                          type: string
+                      required:
+                      - image
+                      - name
+                      type: object
+                    type: array
                   labels:
                     additionalProperties:
                       type: string
@@ -44,7 +62,7 @@ spec:
                     format: int32
                     type: integer
                 required:
-                - image
+                - containers
                 - labels
                 type: object
             required:
