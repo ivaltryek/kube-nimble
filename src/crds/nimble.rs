@@ -38,6 +38,18 @@ pub struct ContainerSpec {
     pub image: String,
     #[doc = "override entrypoint command for a container."]
     pub command: Option<Vec<String>>,
+    #[doc = "cpu request for a container."]
+    #[serde(rename = "cpuRequest")]
+    pub cpu_request: Option<String>,
+    #[doc = "cpu limit for a container."]
+    #[serde(rename = "cpuLimit")]
+    pub cpu_limit: Option<String>,
+    #[doc = "memory request for a container."]
+    #[serde(rename = "memoryRequest")]
+    pub memory_request: Option<String>,
+    #[doc = "memory limit for a container."]
+    #[serde(rename = "memoryLimit")]
+    pub memory_limit: Option<String>,
 }
 /**
  * This function returns the default value for the number of replicas.
