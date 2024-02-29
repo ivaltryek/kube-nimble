@@ -41,27 +41,192 @@ spec:
                           nullable: true
                           type: array
                         cpuLimit:
+                          default: 100m
                           description: cpu limit for a container.
-                          nullable: true
                           type: string
                         cpuRequest:
+                          default: 50m
                           description: cpu request for a container.
-                          nullable: true
                           type: string
                         image:
                           description: Image to use for a container.
                           type: string
-                        memoryLimit:
-                          description: memory limit for a container.
+                        livenessProbe:
+                          description: 'Periodic probe of container liveness. Container will be restarted if the probe fails. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes'
                           nullable: true
+                          properties:
+                            exec:
+                              description: Exec specifies the action to take.
+                              items:
+                                type: string
+                              nullable: true
+                              type: array
+                            httpGet:
+                              description: HTTPGet specifies the http request to perform.
+                              nullable: true
+                              properties:
+                                path:
+                                  description: Path to access on the HTTP server.
+                                  type: string
+                                port:
+                                  description: Name or number of the port to access on the container. Number must be in the range 1 to 65535.
+                                  format: int32
+                                  type: integer
+                              required:
+                              - path
+                              - port
+                              type: object
+                            initialDelaySeconds:
+                              default: 0
+                              description: 'Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes'
+                              format: int32
+                              nullable: true
+                              type: integer
+                            periodSeconds:
+                              default: 10
+                              description: How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.
+                              format: int32
+                              nullable: true
+                              type: integer
+                            successThreshold:
+                              default: 1
+                              description: Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.
+                              format: int32
+                              nullable: true
+                              type: integer
+                            tcpSocket:
+                              description: TCPSocket specifies an action involving a TCP port.
+                              nullable: true
+                              properties:
+                                port:
+                                  description: TCP Port to make checks against.
+                                  format: int32
+                                  type: integer
+                              required:
+                              - port
+                              type: object
+                          type: object
+                        memoryLimit:
+                          default: 100Mi
+                          description: memory limit for a container.
                           type: string
                         memoryRequest:
+                          default: 50Mi
                           description: memory request for a container.
-                          nullable: true
                           type: string
                         name:
                           description: Name of the container.
                           type: string
+                        readinessProbe:
+                          description: 'Periodic probe of container service readiness. Container will be removed from service endpoints if the probe fails. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes'
+                          nullable: true
+                          properties:
+                            exec:
+                              description: Exec specifies the action to take.
+                              items:
+                                type: string
+                              nullable: true
+                              type: array
+                            httpGet:
+                              description: HTTPGet specifies the http request to perform.
+                              nullable: true
+                              properties:
+                                path:
+                                  description: Path to access on the HTTP server.
+                                  type: string
+                                port:
+                                  description: Name or number of the port to access on the container. Number must be in the range 1 to 65535.
+                                  format: int32
+                                  type: integer
+                              required:
+                              - path
+                              - port
+                              type: object
+                            initialDelaySeconds:
+                              default: 0
+                              description: 'Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes'
+                              format: int32
+                              nullable: true
+                              type: integer
+                            periodSeconds:
+                              default: 10
+                              description: How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.
+                              format: int32
+                              nullable: true
+                              type: integer
+                            successThreshold:
+                              default: 1
+                              description: Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.
+                              format: int32
+                              nullable: true
+                              type: integer
+                            tcpSocket:
+                              description: TCPSocket specifies an action involving a TCP port.
+                              nullable: true
+                              properties:
+                                port:
+                                  description: TCP Port to make checks against.
+                                  format: int32
+                                  type: integer
+                              required:
+                              - port
+                              type: object
+                          type: object
+                        startupProbe:
+                          description: 'StartupProbe indicates that the Pod has successfully initialized. If specified, no other probes are executed until this completes successfully. If this probe fails, the Pod will be restarted, just as if the livenessProbe failed. This can be used to provide different probe parameters at the beginning of a Pod’s lifecycle, when it might take a long time to load data or warm a cache, than during steady-state operation. This cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes'
+                          nullable: true
+                          properties:
+                            exec:
+                              description: Exec specifies the action to take.
+                              items:
+                                type: string
+                              nullable: true
+                              type: array
+                            httpGet:
+                              description: HTTPGet specifies the http request to perform.
+                              nullable: true
+                              properties:
+                                path:
+                                  description: Path to access on the HTTP server.
+                                  type: string
+                                port:
+                                  description: Name or number of the port to access on the container. Number must be in the range 1 to 65535.
+                                  format: int32
+                                  type: integer
+                              required:
+                              - path
+                              - port
+                              type: object
+                            initialDelaySeconds:
+                              default: 0
+                              description: 'Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes'
+                              format: int32
+                              nullable: true
+                              type: integer
+                            periodSeconds:
+                              default: 10
+                              description: How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.
+                              format: int32
+                              nullable: true
+                              type: integer
+                            successThreshold:
+                              default: 1
+                              description: Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.
+                              format: int32
+                              nullable: true
+                              type: integer
+                            tcpSocket:
+                              description: TCPSocket specifies an action involving a TCP port.
+                              nullable: true
+                              properties:
+                                port:
+                                  description: TCP Port to make checks against.
+                                  format: int32
+                                  type: integer
+                              required:
+                              - port
+                              type: object
+                          type: object
                       required:
                       - image
                       - name
