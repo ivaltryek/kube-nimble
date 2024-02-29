@@ -1,0 +1,15 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-startup-probe-tcp
+  namespace: test
+spec:
+  deployment:
+    labels:
+      app: demo-startup-probe
+    containers:
+      - image: registry.k8s.io/goproxy:0.1
+        name: goproxy
+        startupProbe:
+          tcpSocket:
+            port: 8080

@@ -1,0 +1,16 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-startup-probe-httpget
+  namespace: test
+spec:
+  deployment:
+    labels:
+      app: demo-startup-probe-httpget
+    containers:
+      - image: nginx:stable
+        name: nginx
+        startupProbe:
+          httpGet:
+            port: 80
+            path: /
