@@ -106,8 +106,7 @@ pub fn default_replicas() -> i32 {
     1
 }
 
-/*StartupProbe indicates that the Pod has successfully initialized. If specified, no other probes are executed until this completes successfully. If this probe fails, the Pod will be restarted, just as if the livenessProbe failed. This can be used to provide different probe parameters at the beginning of a Pod’s lifecycle, when it might take a long time to load data or warm a cache, than during steady-state operation. This cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes**
- * This function creates a default `Option<BTreeMap<String, String>>` containing a single key-value pair:
+/* This function creates a default `Option<BTreeMap<String, String>>` containing a single key-value pair:
  *   - "app.kubernetes.io/managed-by": "kube-nimble"
  *
  * This annotation can be used to identify resources managed by the kube-nimble tool.
