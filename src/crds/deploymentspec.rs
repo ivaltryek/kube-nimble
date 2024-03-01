@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
 pub struct DeploySpec {
-    #[doc = "Containers to in the deployment."]
+    #[doc = "Containers to run in the deployment."]
     pub containers: Vec<ContainerSpec>,
     #[doc = "Number of desired replicas for the deployment."]
     #[serde(default = "default_replicas")]
@@ -129,30 +129,37 @@ pub fn default_annotations() -> Option<BTreeMap<String, String>> {
     annotations
 }
 
+//This function returns the default value for the cpu_limit field in ContainerSpec.
 pub fn default_cpu_resource_limits() -> String {
     String::from("100m")
 }
 
+// This function returns the default value for the memory_limit field in ContainerSpec.,
 pub fn default_memory_resource_limits() -> String {
     String::from("100Mi")
 }
 
+// This function returns the default value for cpu_request field in ContainerSpec.
 pub fn default_cpu_resource_requests() -> String {
     String::from("50m")
 }
 
+// This function returns the default value for memory_request field in ContainerSpec.
 pub fn default_memory_resource_requests() -> String {
     String::from("50Mi")
 }
 
+// This function returns the default value for initial_delay_seconds field in ProbeSpec.
 pub fn default_initial_delay_seconds() -> Option<i32> {
     Some(0)
 }
 
+// This function returns the default value for default_period_seconds field in ProbeSpec.
 pub fn default_period_seconds() -> Option<i32> {
     Some(10)
 }
 
+// This function returns the default value for default_success_threshold field in ProbeSpec.
 pub fn default_success_threshold() -> Option<i32> {
     Some(1)
 }

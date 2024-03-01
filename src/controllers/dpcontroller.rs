@@ -31,45 +31,53 @@ use futures::StreamExt;
 use tracing::{error, info};
 
 pub fn transform_probe(probe_type: &Option<ProbeSpec>) -> Option<Probe> {
-    if let Some(probe) = probe_type {
-        let mut shared_probe = Probe {
-            period_seconds: probe.period_seconds,
-            success_threshold: probe.success_threshold,
-            initial_delay_seconds: probe.initial_delay_seconds,
-            ..Probe::default()
-        };
+    // initialise default &ProbeSpec if probe_type is not None.
+    // Meaning, that any of the probes were passed to the configuration.
+    match probe_type {
+        Some(probe) => {
+            let mut shared_probe = Probe {
+                period_seconds: probe.period_seconds,
+                success_threshold: probe.success_threshold,
+                initial_delay_seconds: probe.initial_delay_seconds,
+                ..Probe::default()
+            };
 
-        match (
-            probe.exec.clone(),
-            probe.http_get.clone(),
-            probe.tcp_socket.clone(),
-        ) {
-            (Some(cmd), None, None) => {
-                shared_probe.exec = Some(ExecAction { command: Some(cmd) });
-                
-                Some(shared_probe)
-            }
-            (None, Some(http_get), None) => {
-                shared_probe.http_get = Some(HTTPGetAction {
-                    path: Some(http_get.path),
-                    port: IntOrString::Int(http_get.port),
-                    ..HTTPGetAction::default()
-                });
+            match (
+                probe.exec.clone(),
+                probe.http_get.clone(),
+                probe.tcp_socket.clone(),
+            ) {
+                // checks for the case where exec handler is passed.
+                (Some(cmd), None, None) => {
+                    shared_probe.exec = Some(ExecAction { command: Some(cmd) });
 
-                Some(shared_probe)
-            }
-            (None, None, Some(tcp_sock)) => {
-                shared_probe.tcp_socket = Some(TCPSocketAction {
-                    port: IntOrString::Int(tcp_sock.port),
-                    ..TCPSocketAction::default()
-                });
+                    Some(shared_probe)
+                }
+                // checks for the case where httpGet handler is passed.
+                (None, Some(http_get), None) => {
+                    shared_probe.http_get = Some(HTTPGetAction {
+                        path: Some(http_get.path),
+                        port: IntOrString::Int(http_get.port),
+                        ..HTTPGetAction::default()
+                    });
 
-                Some(shared_probe)
+                    Some(shared_probe)
+                }
+                // checks fir the case where tcpSocket handler is passed.
+                (None, None, Some(tcp_sock)) => {
+                    shared_probe.tcp_socket = Some(TCPSocketAction {
+                        port: IntOrString::Int(tcp_sock.port),
+                        ..TCPSocketAction::default()
+                    });
+
+                    Some(shared_probe)
+                }
+                // Returns none if no handler is passed.
+                _ => None,
             }
-            _ =>  None,
         }
-    } else {
-        None
+        // Return none because it might happen that no probes were passed in the configuration.
+        _ => None,
     }
 }
 
@@ -104,7 +112,7 @@ pub fn transform_containers(container_spec: Vec<ContainerSpec>) -> Vec<Container
             container.readiness_probe = transform_probe(&spec.readiness_probe);
             container.startup_probe = transform_probe(&spec.startup_probe);
 
-            // return container.
+            // return modified container.
             container
         })
         .collect();

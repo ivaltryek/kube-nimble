@@ -31,7 +31,7 @@ spec:
                     nullable: true
                     type: object
                   containers:
-                    description: Containers to in the deployment.
+                    description: Containers to run in the deployment.
                     items:
                       properties:
                         command:
