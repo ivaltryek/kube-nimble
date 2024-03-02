@@ -18,7 +18,10 @@ use kube::{
     Api, Resource,
 };
 
-use crate::crds::{deploymentspec::ProbeSpec, nimble::Nimble};
+use crate::crds::{
+    deploymentspec::{ProbeSpec, ResourceSpec},
+    nimble::Nimble,
+};
 
 use crate::crds::deploymentspec::ContainerSpec;
 
@@ -30,6 +33,31 @@ use futures::StreamExt;
 
 use tracing::{error, info};
 
+// Transform resources passed in manifest; This function converts given cpu, memory to
+// Option<BTreeMap<String, Quantity>>
+pub fn transform_resources(
+    resource_spec: &Option<ResourceSpec>,
+) -> Option<BTreeMap<String, Quantity>> {
+    match resource_spec {
+        Some(spec) => match (spec.cpu.clone(), spec.memory.clone()) {
+            // case when both cpu and memory are provided.
+            (Some(cpu), Some(memory)) => Some(BTreeMap::from([
+                ("cpu".to_owned(), Quantity(cpu)),
+                ("memory".to_owned(), Quantity(memory)),
+            ])),
+            // case when only memory is provided.
+            (None, Some(memory)) => Some(BTreeMap::from([("memory".to_owned(), Quantity(memory))])),
+            // case when only cpu is provided.
+            (Some(cpu), None) => Some(BTreeMap::from([("cpu".to_owned(), Quantity(cpu))])),
+            // case when none of the field is provided.
+            _ => None,
+        },
+        // It could also happen that, requests or limits is not passed in the manifest.
+        _ => None,
+    }
+}
+
+// Transform probes passed in manifest. i.e liveness, readiness, startup.
 pub fn transform_probe(probe_type: &Option<ProbeSpec>) -> Option<Probe> {
     // initialise default &ProbeSpec if probe_type is not None.
     // Meaning, that any of the probes were passed to the configuration.
@@ -94,14 +122,8 @@ pub fn transform_containers(container_spec: Vec<ContainerSpec>) -> Vec<Container
                 image: Some(spec.image.clone()),
                 command: spec.command.clone(),
                 resources: Some(ResourceRequirements {
-                    requests: Some(BTreeMap::from([
-                        ("memory".to_owned(), Quantity(spec.memory_request.clone())),
-                        ("cpu".to_owned(), Quantity(spec.cpu_request.clone())),
-                    ])),
-                    limits: Some(BTreeMap::from([
-                        ("memory".to_owned(), Quantity(spec.memory_limit.clone())),
-                        ("cpu".to_owned(), Quantity(spec.cpu_limit.clone())),
-                    ])),
+                    requests: transform_resources(&spec.requests),
+                    limits: transform_resources(&spec.limits),
                     ..ResourceRequirements::default()
                 }),
                 ..Container::default()

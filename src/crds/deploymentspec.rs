@@ -25,18 +25,15 @@ pub struct ContainerSpec {
     pub image: String,
     #[doc = "override entrypoint command for a container."]
     pub command: Option<Vec<String>>,
-    #[doc = "cpu request for a container."]
-    #[serde(rename = "cpuRequest", default = "default_cpu_resource_requests")]
-    pub cpu_request: String,
-    #[doc = "cpu limit for a container."]
-    #[serde(rename = "cpuLimit", default = "default_cpu_resource_limits")]
-    pub cpu_limit: String,
-    #[doc = "memory request for a container."]
-    #[serde(rename = "memoryRequest", default = "default_memory_resource_requests")]
-    pub memory_request: String,
-    #[doc = "memory limit for a container."]
-    #[serde(rename = "memoryLimit", default = "default_memory_resource_limits")]
-    pub memory_limit: String,
+    #[doc = "Requests describes the minimum amount of compute resources required. 
+      If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, 
+      otherwise to an implementation-defined value. Requests cannot exceed Limits. 
+      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    "]
+    pub requests: Option<ResourceSpec>,
+    #[doc = "Limits describes the maximum amount of compute resources allowed. 
+      More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/"]
+    pub limits: Option<ResourceSpec>,
     #[doc = "Periodic probe of container service readiness. 
       Container will be removed from service endpoints if the probe fails. 
       Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes"]
@@ -54,6 +51,14 @@ pub struct ContainerSpec {
       This cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes"]
     #[serde(rename = "startupProbe")]
     pub startup_probe: Option<ProbeSpec>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
+pub struct ResourceSpec {
+    #[doc = "cpu config (requests/limits) for the container."]
+    pub cpu: Option<String>,
+    #[doc = "memory config (requests/limits) for the container."]
+    pub memory: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
@@ -127,26 +132,6 @@ pub fn default_annotations() -> Option<BTreeMap<String, String>> {
         }
     }
     annotations
-}
-
-//This function returns the default value for the cpu_limit field in ContainerSpec.
-pub fn default_cpu_resource_limits() -> String {
-    String::from("100m")
-}
-
-// This function returns the default value for the memory_limit field in ContainerSpec.,
-pub fn default_memory_resource_limits() -> String {
-    String::from("100Mi")
-}
-
-// This function returns the default value for cpu_request field in ContainerSpec.
-pub fn default_cpu_resource_requests() -> String {
-    String::from("50m")
-}
-
-// This function returns the default value for memory_request field in ContainerSpec.
-pub fn default_memory_resource_requests() -> String {
-    String::from("50Mi")
 }
 
 // This function returns the default value for initial_delay_seconds field in ProbeSpec.

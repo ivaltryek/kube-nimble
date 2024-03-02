@@ -40,17 +40,22 @@ spec:
                             type: string
                           nullable: true
                           type: array
-                        cpuLimit:
-                          default: 100m
-                          description: cpu limit for a container.
-                          type: string
-                        cpuRequest:
-                          default: 50m
-                          description: cpu request for a container.
-                          type: string
                         image:
                           description: Image to use for a container.
                           type: string
+                        limits:
+                          description: 'Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          nullable: true
+                          properties:
+                            cpu:
+                              description: cpu config (requests/limits) for the container.
+                              nullable: true
+                              type: string
+                            memory:
+                              description: memory config (requests/limits) for the container.
+                              nullable: true
+                              type: string
+                          type: object
                         livenessProbe:
                           description: 'Periodic probe of container liveness. Container will be restarted if the probe fails. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes'
                           nullable: true
@@ -106,14 +111,6 @@ spec:
                               - port
                               type: object
                           type: object
-                        memoryLimit:
-                          default: 100Mi
-                          description: memory limit for a container.
-                          type: string
-                        memoryRequest:
-                          default: 50Mi
-                          description: memory request for a container.
-                          type: string
                         name:
                           description: Name of the container.
                           type: string
@@ -171,6 +168,19 @@ spec:
                               required:
                               - port
                               type: object
+                          type: object
+                        requests:
+                          description: 'Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/'
+                          nullable: true
+                          properties:
+                            cpu:
+                              description: cpu config (requests/limits) for the container.
+                              nullable: true
+                              type: string
+                            memory:
+                              description: memory config (requests/limits) for the container.
+                              nullable: true
+                              type: string
                           type: object
                         startupProbe:
                           description: 'StartupProbe indicates that the Pod has successfully initialized. If specified, no other probes are executed until this completes successfully. If this probe fails, the Pod will be restarted, just as if the livenessProbe failed. This can be used to provide different probe parameters at the beginning of a Pod’s lifecycle, when it might take a long time to load data or warm a cache, than during steady-state operation. This cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes'

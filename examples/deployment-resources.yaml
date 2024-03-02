@@ -1,4 +1,3 @@
-
 apiVersion: ivaltryek.github.com/v1
 kind: Nimble
 metadata:
@@ -16,4 +15,9 @@ spec:
           exec: ["/bin/sh", "-c", "cat /tmp/healthy"]
         readinessProbe:
           exec: ["/bin/sh", "-c", "cat /tmp/healthy"]
+        requests:
+          cpu: 100m
+        # limits:
+          # memory: 100Mi
+
 
