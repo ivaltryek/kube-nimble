@@ -1,0 +1,23 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-liveness-probe-exec
+  namespace: test
+spec:
+  deployment:
+    labels:
+      app: demo-liveness-probe-exec
+    containers:
+      - image: registry.k8s.io/busybox
+        name: busybox
+        command: ["/bin/sh", "-c", "touch /tmp/healthy; sleep 600"]
+        livenessProbe:
+          exec: ["/bin/sh", "-c", "cat /tmp/healthy"]
+        readinessProbe:
+          exec: ["/bin/sh", "-c", "cat /tmp/healthy"]
+        requests:
+          cpu: 100m
+        # limits:
+          # memory: 100Mi
+
+

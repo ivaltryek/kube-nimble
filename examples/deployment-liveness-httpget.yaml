@@ -1,0 +1,16 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-liveness-probe-httpget
+  namespace: test
+spec:
+  deployment:
+    labels:
+      app: demo-liveness-probe-httpget
+    containers:
+      - image: nginx:stable
+        name: nginx
+        livenessProbe:
+          httpGet:
+            port: 80
+            path: /

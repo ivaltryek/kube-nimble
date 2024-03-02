@@ -1,0 +1,16 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-readiness-probe-httpget
+  namespace: test
+spec:
+  deployment:
+    labels:
+      app: demo-readiness-probe-httpget
+    containers:
+      - image: nginx:stable
+        name: nginx
+        readinessProbe:
+          httpGet:
+            port: 80
+            path: /

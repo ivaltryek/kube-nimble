@@ -1,0 +1,15 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-readiness-probe-exec
+  namespace: test
+spec:
+  deployment:
+    labels:
+      app: demo-readiness-probe-exec
+    containers:
+      - image: registry.k8s.io/busybox
+        name: busybox
+        command: ["/bin/sh", "-c", "touch /tmp/healthy; sleep 600"]
+        readinessProbe:
+          exec: ["/bin/sh", "-c", "cat /tmp/healthy"]
