@@ -33,8 +33,10 @@ jobs:
           cp /tmp/$TAG_NAME.md docs/
       - name: Update the branch
         run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "<41898282+github-actions[bot]@users.noreply.github.com>"
           git add .
-          git commit -m "docs: update gh-pages" --author "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          git commit -m "docs: update gh-pages"
           git push
 
 
