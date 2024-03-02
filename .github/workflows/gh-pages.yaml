@@ -1,0 +1,41 @@
+name: gh-pages
+
+on:
+  push:
+    tags:
+      - 'v0.*'
+
+jobs:
+  deploy-to-gh-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set ENVs
+        run: |
+          echo "TAG_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
+      - name: Generate (dot)md for CRD API Reference
+        run: |
+          wget https://github.com/fybrik/crdoc/releases/download/v0.6.3/crdoc_Linux_x86_64.tar.gz
+          tar -xvf crdoc_Linux_x86_64.tar.gz
+          chmod +x crdoc
+          crdoc --resources crd/nimble.ivaltryek.github.com.yaml --output /tmp/$TAG_NAME.md
+      - name: Edit md file to add layout field
+        run: |
+          sed -i '1s/^/---\nlayout: default\n---\n\n/' /tmp/$TAG_NAME.md
+      - name: Checkout to gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+      - name: Update index.md
+        run: |
+          echo "- [$TAG_NAME](./$TAG_NAME.md)" >> docs/index.md
+          cp /tmp/$TAG_NAME.md docs/
+      - name: Update the branch
+        run: |
+          git add .
+          git commit -m "docs: update gh-pages" --author "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+          git push
+
+
+
