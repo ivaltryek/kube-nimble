@@ -1,0 +1,22 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-env
+  namespace: test
+spec:
+  deployment:
+    labels:
+      app: demo-env
+    containers:
+      - image: nginx:stable
+        name: nginx
+        livenessProbe:
+          httpGet:
+            port: 80
+            path: /
+        env:
+          - name: TEST
+            value: test_value
+          - name: FOO
+            value: BAR
+          - name: HELLO

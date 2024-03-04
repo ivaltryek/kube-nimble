@@ -4,7 +4,7 @@ use k8s_openapi::{
     api::{
         apps::v1::{Deployment, DeploymentSpec},
         core::v1::{
-            Container, ExecAction, HTTPGetAction, PodSpec, PodTemplateSpec, Probe,
+            Container, EnvVar, ExecAction, HTTPGetAction, PodSpec, PodTemplateSpec, Probe,
             ResourceRequirements, TCPSocketAction,
         },
     },
@@ -19,7 +19,7 @@ use kube::{
 };
 
 use crate::crds::{
-    deploymentspec::{ProbeSpec, ResourceSpec},
+    deploymentspec::{EnvSpec, ProbeSpec, ResourceSpec},
     nimble::Nimble,
 };
 
@@ -32,6 +32,24 @@ use tokio::time::Duration;
 use futures::StreamExt;
 
 use tracing::{error, info};
+
+pub fn transform_envs(env_vec: Option<Vec<EnvSpec>>) -> Option<Vec<EnvVar>> {
+    match env_vec {
+        Some(env) => {
+            let mut env_vars = Vec::new();
+
+            for var in env.iter() {
+                env_vars.push(EnvVar {
+                    name: var.name.clone(),
+                    value: var.value.clone(),
+                    ..EnvVar::default()
+                })
+            }
+            Some(env_vars)
+        }
+        _ => None,
+    }
+}
 
 // Transform resources passed in manifest; This function converts given cpu, memory to
 // Option<BTreeMap<String, Quantity>>
@@ -126,6 +144,7 @@ pub fn transform_containers(container_spec: Vec<ContainerSpec>) -> Vec<Container
                     limits: transform_resources(&spec.limits),
                     ..ResourceRequirements::default()
                 }),
+                env: transform_envs(spec.env.clone()),
                 ..Container::default()
             };
 
