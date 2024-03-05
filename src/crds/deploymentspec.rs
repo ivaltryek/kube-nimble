@@ -43,14 +43,16 @@ pub struct ContainerSpec {
       Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes"]
     #[serde(rename = "livenessProbe")]
     pub liveness_probe: Option<ProbeSpec>,
-    #[doc = "StartupProbe indicates that the Pod has successfully initialized. 
-      If specified, no other probes are executed until this completes successfully. 
-      If this probe fails, the Pod will be restarted, just as if the livenessProbe failed. 
-      This can be used to provide different probe parameters at the beginning of a Pod’s lifecycle, 
-      when it might take a long time to load data or warm a cache, than during steady-state operation. 
+    #[doc = "StartupProbe indicates that the Pod has successfully initialized.
+      If specified, no other probes are executed until this completes successfully.
+      If this probe fails, the Pod will be restarted, just as if the livenessProbe failed.
+      This can be used to provide different probe parameters at the beginning of a Pod’s lifecycle,
+      when it might take a long time to load data or warm a cache, than during steady-state operation.
       This cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes"]
     #[serde(rename = "startupProbe")]
     pub startup_probe: Option<ProbeSpec>,
+    #[doc = "List of environment variables to set in the container. Cannot be updated."]
+    pub env: Option<Vec<EnvSpec>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
@@ -99,6 +101,18 @@ pub struct HTTPGet {
 pub struct TCPSocket {
     #[doc = "TCP Port to make checks against."]
     pub port: i32,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
+pub struct EnvSpec {
+    #[doc = "Name of environment variable"]
+    pub name: String,
+    #[doc = "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. 
+      If a variable cannot be resolved, the reference in the input string will be unchanged. 
+      Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME)
+      syntax: i.e. “$$(VAR_NAME)” will produce the string literal “$(VAR_NAME)”. 
+      Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to “”."]
+    pub value: Option<String>,
 }
 
 /**
