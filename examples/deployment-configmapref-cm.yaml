@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: game-config-env-file
+  namespace: test
+data:
+  allowed: '"true"'
+  enemies: aliens
+  lives: "3"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-multi-env-files
+  namespace: test
+data:
+  allowed: '"true"'
+  color: purple
+  enemies: aliens
+  how: fairlyNice
+  lives: "3"
+  textmode: "true"

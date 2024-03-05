@@ -1,0 +1,21 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-envfrom-full
+  namespace: test
+spec:
+  deployment:
+    labels:
+      app: demo-envfrom-full
+    containers:
+      - image: nginx:stable
+        name: nginx
+        livenessProbe:
+          httpGet:
+            port: 80
+            path: /
+        envFrom:
+          - secretRef: secret-ref-single
+            configMapRef: game-config-env-file
+          - configMapRef: config-multi-env-files
+            secretRef: secret-ref-multi

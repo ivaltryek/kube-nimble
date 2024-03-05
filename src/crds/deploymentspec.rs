@@ -53,6 +53,13 @@ pub struct ContainerSpec {
     pub startup_probe: Option<ProbeSpec>,
     #[doc = "List of environment variables to set in the container. Cannot be updated."]
     pub env: Option<Vec<EnvSpec>>,
+    #[doc = "List of sources to populate environment variables in the container. 
+      The keys defined within a source must be a C_IDENTIFIER.
+      All invalid keys will be reported as an event when the container is starting.
+      When a key exists in multiple sources, the value associated with the last source will take precedence.
+      Values defined by an Env with a duplicate key will take precedence. Cannot be updated."]
+    #[serde(rename = "envFrom")]
+    pub env_from: Option<Vec<EnvFromSpec>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
@@ -113,6 +120,16 @@ pub struct EnvSpec {
       syntax: i.e. “$$(VAR_NAME)” will produce the string literal “$(VAR_NAME)”. 
       Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to “”."]
     pub value: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
+pub struct EnvFromSpec {
+    #[doc = "The ConfigMap to select from"]
+    #[serde(rename = "configMapRef")]
+    pub config_map_ref: Option<String>,
+    #[doc = "The Secret to select from"]
+    #[serde(rename = "secretRef")]
+    pub secret_ref: Option<String>,
 }
 
 /**

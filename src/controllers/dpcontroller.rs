@@ -4,8 +4,9 @@ use k8s_openapi::{
     api::{
         apps::v1::{Deployment, DeploymentSpec},
         core::v1::{
-            Container, EnvVar, ExecAction, HTTPGetAction, PodSpec, PodTemplateSpec, Probe,
-            ResourceRequirements, TCPSocketAction,
+            ConfigMapEnvSource, Container, EnvFromSource, EnvVar, ExecAction, HTTPGetAction,
+            PodSpec, PodTemplateSpec, Probe, ResourceRequirements, SecretEnvSource,
+            TCPSocketAction,
         },
     },
     apimachinery::pkg::{
@@ -19,7 +20,7 @@ use kube::{
 };
 
 use crate::crds::{
-    deploymentspec::{EnvSpec, ProbeSpec, ResourceSpec},
+    deploymentspec::{EnvFromSpec, EnvSpec, ProbeSpec, ResourceSpec},
     nimble::Nimble,
 };
 
@@ -32,6 +33,52 @@ use tokio::time::Duration;
 use futures::StreamExt;
 
 use tracing::{error, info};
+
+pub fn transform_env_from(env_from_vec: Option<Vec<EnvFromSpec>>) -> Option<Vec<EnvFromSource>> {
+    match env_from_vec {
+        Some(env_from) => {
+            let mut env_from_vars = Vec::new();
+
+            for var in env_from.iter() {
+                match (var.config_map_ref.clone(), var.secret_ref.clone()) {
+                    (Some(cm), Some(secret)) => {
+                        env_from_vars.push(EnvFromSource {
+                            config_map_ref: Some(ConfigMapEnvSource {
+                                name: Some(cm.clone()),
+                                ..ConfigMapEnvSource::default()
+                            }),
+                            ..EnvFromSource::default()
+                        });
+                        env_from_vars.push(EnvFromSource {
+                            secret_ref: Some(SecretEnvSource {
+                                name: Some(secret),
+                                ..SecretEnvSource::default()
+                            }),
+                            ..EnvFromSource::default()
+                        })
+                    }
+                    (Some(cm), None) => env_from_vars.push(EnvFromSource {
+                        config_map_ref: Some(ConfigMapEnvSource {
+                            name: Some(cm.clone()),
+                            ..ConfigMapEnvSource::default()
+                        }),
+                        ..EnvFromSource::default()
+                    }),
+                    (None, Some(secret)) => env_from_vars.push(EnvFromSource {
+                        secret_ref: Some(SecretEnvSource {
+                            name: Some(secret.clone()),
+                            ..SecretEnvSource::default()
+                        }),
+                        ..EnvFromSource::default()
+                    }),
+                    _ => {}
+                }
+            }
+            Some(env_from_vars)
+        }
+        _ => None,
+    }
+}
 
 pub fn transform_envs(env_vec: Option<Vec<EnvSpec>>) -> Option<Vec<EnvVar>> {
     match env_vec {
@@ -145,6 +192,7 @@ pub fn transform_containers(container_spec: Vec<ContainerSpec>) -> Vec<Container
                     ..ResourceRequirements::default()
                 }),
                 env: transform_envs(spec.env.clone()),
+                env_from: transform_env_from(spec.env_from.clone()),
                 ..Container::default()
             };
 
