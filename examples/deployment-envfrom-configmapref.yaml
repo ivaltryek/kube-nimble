@@ -1,0 +1,19 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-envfrom-configmapref
+  namespace: test
+spec:
+  deployment:
+    labels:
+      app: demo-envfrom-configmapref
+    containers:
+      - image: nginx:stable
+        name: nginx
+        livenessProbe:
+          httpGet:
+            port: 80
+            path: /
+        envFrom:
+          - configMapRef: game-config-env-file
+
