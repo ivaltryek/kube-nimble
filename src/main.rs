@@ -2,6 +2,7 @@ use std::sync::Arc;
 mod common;
 mod controllers;
 mod crds;
+mod transformers;
 use kube::{Api, Client};
 use tracing::info;
 
