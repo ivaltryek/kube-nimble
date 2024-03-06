@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use super::deploymentspec::DeploySpec;
+use super::{deploymentspec::DeploySpec, servicespec::SvcSpec};
 
 #[derive(kube::CustomResource, Serialize, Deserialize, Debug, PartialEq, Clone, JsonSchema)]
 #[kube(
@@ -15,4 +15,5 @@ use super::deploymentspec::DeploySpec;
 
 pub struct NimbleSpec {
     pub deployment: DeploySpec,
+    pub service: Option<SvcSpec>,
 }
