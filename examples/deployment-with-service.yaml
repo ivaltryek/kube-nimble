@@ -1,0 +1,18 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-deployment-service
+  namespace: test
+spec:
+  deployment:
+    containers:
+      - image: nginx:stable
+        name: nginx-stable
+    labels:
+      app: nginx
+      env: test
+  service:
+    ports:
+      - name: http
+        port: 80
+        targetPort: 80
