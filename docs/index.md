@@ -14,3 +14,4 @@ Below are the different versions of Custom Resource Definitions:
 - [v0.4.0](./v0.4.0.md)
 - [v0.5.0](./v0.5.0.md)
 - [v0.5.0](./v0.5.0.md)
+- [v0.5.0](./v0.5.0.md)
