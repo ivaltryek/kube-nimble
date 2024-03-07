@@ -27,7 +27,7 @@ pub struct SvcSpec {
       which routes to the same endpoints as the clusterIP. “ExternalName” aliases this service to the specified externalName.
       Several other fields do not apply to ExternalName services. 
       More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types"]
-    #[serde(rename = "type")]
+    #[serde(rename = "type", default = "default_svc_type")]
     pub type_: Option<String>,
     #[doc = "The list of ports that are exposed by this service. 
       More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies"]
@@ -60,7 +60,7 @@ pub struct PortSpec {
       If this is not specified, the value of the ‘port’ field is used (an identity map). 
       This field is ignored for services with clusterIP=None, and should be omitted or set equal to the ‘port’ field. 
       More info: https://kubernetes.io/docs/concepts/services-networking/service/#defining-a-service"]
-    #[serde(rename = "target_port")]
+    #[serde(rename = "targetPort")]
     pub target_port: Option<i32>,
 }
 
@@ -70,4 +70,8 @@ fn default_svc_annotations() -> Option<BTreeMap<String, String>> {
 
 fn default_protocol() -> Option<String> {
     Some("TCP".to_owned())
+}
+
+fn default_svc_type() -> Option<String> {
+    Some("ClusterIP".to_owned())
 }
