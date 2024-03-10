@@ -8,6 +8,7 @@ use tracing::info;
 
 use crate::common::client::ContextData;
 use crate::controllers::dpcontroller::run_dp_controller;
+use crate::controllers::hpacontroller::run_hpa_controller;
 use crate::controllers::servicecontroller::run_svc_controller;
 use crate::crds::nimble::Nimble;
 
@@ -23,9 +24,10 @@ async fn main() {
 
     info!("starting nimble controller");
 
-    let (_, _) = futures::join!(
+    let (_, _, _) = futures::join!(
         run_dp_controller(crd_api.clone(), context.clone()),
         run_svc_controller(crd_api.clone(), context.clone()),
+        run_hpa_controller(crd_api.clone(), context.clone())
     );
 
     info!("controller terminated");
