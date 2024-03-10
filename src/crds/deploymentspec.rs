@@ -7,9 +7,6 @@ use serde::{Deserialize, Serialize};
 pub struct DeploySpec {
     #[doc = "Containers to run in the deployment."]
     pub containers: Vec<ContainerSpec>,
-    #[doc = "Number of desired replicas for the deployment."]
-    #[serde(default = "default_replicas")]
-    pub replicas: i32,
     #[doc = "Labels to be applied to the deployment and its pods."]
     pub labels: BTreeMap<String, String>,
     #[doc = "Annotations to be applied to the deployment and its pods."]
@@ -130,16 +127,6 @@ pub struct EnvFromSpec {
     #[doc = "The Secret to select from"]
     #[serde(rename = "secretRef")]
     pub secret_ref: Option<String>,
-}
-
-/**
- * This function returns the default value for the number of replicas.
- * In this specific case, the default is set to 1.
- *
- * You can customize this value by modifying the function body.
- */
-pub fn default_replicas() -> i32 {
-    1
 }
 
 /* This function creates a default `Option<BTreeMap<String, String>>` containing a single key-value pair:

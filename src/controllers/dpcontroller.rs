@@ -60,7 +60,6 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
             ..ObjectMeta::default()
         },
         spec: Some(DeploymentSpec {
-            replicas: Some(nimble.spec.deployment.replicas),
             selector: LabelSelector {
                 match_expressions: None,
                 match_labels: Some(labels.clone()),

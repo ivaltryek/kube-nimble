@@ -1,7 +1,7 @@
 apiVersion: ivaltryek.github.com/v1
 kind: Nimble
 metadata:
-  name: demo-deployment-service
+  name: demo-deployment-service-hpa
   namespace: test
 spec:
   deployment:
@@ -11,10 +11,17 @@ spec:
         requests:
           cpu: 50m
     labels:
-      app: nginx
-      env: test
+      test: hpa
   service:
     ports:
       - name: http
         port: 80
         targetPort: 80
+  hpa:
+    min: 2
+    max: 4
+    resourcePolicy:
+      name: cpu
+      type: Utilization
+      avgUtil: 30
+
