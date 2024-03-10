@@ -8,6 +8,8 @@ spec:
     containers:
       - image: nginx:stable
         name: nginx-stable
+        requests:
+          cpu: 50m
     labels:
       test: hpa
   service:
