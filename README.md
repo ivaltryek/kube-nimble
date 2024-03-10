@@ -1,6 +1,13 @@
 # kube-nimble
   nimble /ˈnɪmbl/ - quick and light in movement or action; agile.
 
+  [<img alt="github" src="https://img.shields.io/badge/github-ivaltryek/kube--nimble-8da0cb?style=for-the-badge&labelColor=555555&logo=github" height="25">](https://github.com/ivaltryek/kube-nimble)
+  [<img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/ivaltryek/kube-nimble/ci.yaml?style=for-the-badge&logo=github&labelColor=555555" height="25">](https://github.com/ivaltryek/kube-nimble/actions/workflows/ci.yaml)
+  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/ivaltryek/kube-nimble?include_prereleases&display_name=release&style=for-the-badge&logo=github&labelColor=555555" height="25">
+  <img alt="GitHub License" src="https://img.shields.io/github/license/ivaltryek/kube-nimble?style=for-the-badge&logo=apache&labelColor=555555" height="25">
+  [<img alt="GitHub deployments" src="https://img.shields.io/github/deployments/ivaltryek/kube-nimble/github-pages?style=for-the-badge&label=Github-Pages&labelColor=555555&link=https%3A%2F%2Fivaltryek.github.io%2Fkube-nimble%2F" height="25">](https://ivaltryek.github.io/kube-nimble/)
+
+
 This project began from a place of curiosity about Kubernetes CRDs and their controllers, as well as a desire to learn Rust. I never anticipated how straightforward it would be to craft controller logic in Rust. It's evident that many individuals encounter challenges when managing numerous manifests for various environments (although tools like Helm and Kustomize address this). This tool offers a streamlined alternative for deploying native Kubernetes objects with minimal overhead, eliminating the need to create lengthy manifests for each Kubernetes object.
 
 As it stands, this tool currently supports the minimal creation of deployments, offering arguments such as image and replica count. However, my plan is to extend its capabilities to encompass all other Kubernetes objects in the near future.
