@@ -17,6 +17,7 @@ pub struct HPASpec {
      It defaults to 1 pod.
      minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured.
      Scaling is active as long as at least one metric value is available."]
+    #[serde(default = "default_min_replicas")]
     pub min: Option<i32>,
     #[doc = "resource refers to a resource metric (such as those specified in requests and limits) 
       known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory)."]
@@ -41,4 +42,9 @@ pub struct ResourceMetricSpec {
 // Return default annotations to applied to an object.
 fn default_hpa_annotations() -> Option<BTreeMap<String, String>> {
     default_annotations()
+}
+
+// Return default min replica value.
+fn default_min_replicas() -> Option<i32> {
+    Some(1)
 }
