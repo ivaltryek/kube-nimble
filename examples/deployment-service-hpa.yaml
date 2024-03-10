@@ -1,0 +1,25 @@
+apiVersion: ivaltryek.github.com/v1
+kind: Nimble
+metadata:
+  name: demo-deployment-service-hpa
+  namespace: test
+spec:
+  deployment:
+    containers:
+      - image: nginx:stable
+        name: nginx-stable
+    labels:
+      test: hpa
+  service:
+    ports:
+      - name: http
+        port: 80
+        targetPort: 80
+  hpa:
+    min: 2
+    max: 4
+    resourcePolicy:
+      name: cpu
+      type: Utilization
+      avgUtil: 30
+
