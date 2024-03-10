@@ -21,6 +21,7 @@ spec:
           spec:
             properties:
               deployment:
+                description: Spec for Deployment Object
                 properties:
                   annotations:
                     additionalProperties:
@@ -278,16 +279,56 @@ spec:
                       type: string
                     description: Labels to be applied to the deployment and its pods.
                     type: object
-                  replicas:
-                    default: 1
-                    description: Number of desired replicas for the deployment.
-                    format: int32
-                    type: integer
                 required:
                 - containers
                 - labels
                 type: object
+              hpa:
+                description: Spec for Autoscaling (HPA) Object
+                nullable: true
+                properties:
+                  annotations:
+                    additionalProperties:
+                      type: string
+                    default:
+                      app.kubernetes.io/managed-by: kube-nimble
+                    description: Annotations to be applied to the HPA object
+                    nullable: true
+                    type: object
+                  max:
+                    description: maxReplicas is the upper limit for the number of replicas to which the autoscaler can scale up. It cannot be less that minReplicas.
+                    format: int32
+                    type: integer
+                  min:
+                    default: 1
+                    description: minReplicas is the lower limit for the number of replicas to which the autoscaler can scale down. It defaults to 1 pod. minReplicas is allowed to be 0 if the alpha feature gate HPAScaleToZero is enabled and at least one Object or External metric is configured. Scaling is active as long as at least one metric value is available.
+                    format: int32
+                    nullable: true
+                    type: integer
+                  resourcePolicy:
+                    description: resource refers to a resource metric (such as those specified in requests and limits) known to Kubernetes describing each pod in the current scale target (e.g. CPU or memory).
+                    nullable: true
+                    properties:
+                      avgUtil:
+                        description: avgUtil is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type
+                        format: int32
+                        nullable: true
+                        type: integer
+                      name:
+                        description: name is the name of the resource in question.
+                        type: string
+                      type:
+                        description: type represents whether the metric type is Utilization, Value, or AverageValue
+                        type: string
+                    required:
+                    - name
+                    - type
+                    type: object
+                required:
+                - max
+                type: object
               service:
+                description: Spec for Service Object
                 nullable: true
                 properties:
                   annotations:
