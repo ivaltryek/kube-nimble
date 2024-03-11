@@ -3,8 +3,8 @@
 
   [<img alt="github" src="https://img.shields.io/badge/github-ivaltryek/kube--nimble-8da0cb?style=for-the-badge&labelColor=555555&logo=github" height="25">](https://github.com/ivaltryek/kube-nimble)
   [<img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/ivaltryek/kube-nimble/ci.yaml?style=for-the-badge&logo=github&labelColor=555555" height="25">](https://github.com/ivaltryek/kube-nimble/actions/workflows/ci.yaml)
-  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/ivaltryek/kube-nimble?include_prereleases&display_name=release&style=for-the-badge&logo=github&labelColor=555555" height="25">
-  <img alt="GitHub License" src="https://img.shields.io/github/license/ivaltryek/kube-nimble?style=for-the-badge&logo=apache&labelColor=555555" height="25">
+  [<img alt="GitHub Release" src="https://img.shields.io/github/v/release/ivaltryek/kube-nimble?include_prereleases&display_name=release&style=for-the-badge&logo=github&labelColor=555555" height="25">](https://github.com/ivaltryek/kube-nimble/releases)
+  [<img alt="GitHub License" src="https://img.shields.io/github/license/ivaltryek/kube-nimble?style=for-the-badge&logo=apache&labelColor=555555" height="25">](https://github.com/ivaltryek/kube-nimble/blob/main/LICENSE)
   [<img alt="GitHub deployments" src="https://img.shields.io/github/deployments/ivaltryek/kube-nimble/github-pages?style=for-the-badge&label=Github-Pages&labelColor=555555&link=https%3A%2F%2Fivaltryek.github.io%2Fkube-nimble%2F" height="25">](https://ivaltryek.github.io/kube-nimble/)
 
 
