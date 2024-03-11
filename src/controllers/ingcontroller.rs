@@ -139,7 +139,7 @@ pub async fn run_ing_controller(crd_api: Api<Nimble>, context: Arc<ContextData>)
                     }
                 }
                 Err(reconciliation_err) => {
-                    error!("Service reconciliation error: {:?}", reconciliation_err)
+                    error!("Ingress reconciliation error: {:?}", reconciliation_err)
                 }
             }
         })
