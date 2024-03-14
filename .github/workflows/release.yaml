@@ -67,17 +67,15 @@ jobs:
           args: --no-build --no-strip --output=. --target=${{ matrix.target }}
       - name: Package (*nix)
         run: |
-          tar -cv LICENSE README.md \
-            -C target/${{ matrix.target }}/release/nmexport nmexport |
+          tar -cv LICENSE README.md target/${{ matrix.target }}/release/nmexport nmexport |
             gzip --best > \
             nmexport-${{ steps.get_version.outputs.value }}-${{ matrix.target }}.tar.gz
-          tar -cv LICENSE README.md \
-            -C target/${{ matrix.target }}/release/crdgen crdgen |
+          tar -cv LICENSE README.md target/${{ matrix.target }}/release/crdgen crdgen |
             gzip --best > \
             crdgen-${{ steps.get_version.outputs.value }}-${{ matrix.target }}.tar.gz
       - name: generate crd manifest
         run: |
-          target/x86_64-unknown-linux-musl/release/crdgen > nimble.ivaltryek.github.com.yaml
+          target/${{ matrix.target }}/release/crdgen > nimble.ivaltryek.github.com.yaml
       - name: create release
         uses: softprops/action-gh-release@v2
         with:
