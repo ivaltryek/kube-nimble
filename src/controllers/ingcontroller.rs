@@ -3,18 +3,21 @@ use std::sync::{
     Arc,
 };
 
-use k8s_openapi::api::networking::v1::{Ingress, IngressSpec};
+use k8s_openapi::api::networking::v1::Ingress;
 use kube::{
-    api::{ObjectMeta, Patch, PatchParams},
+    api::{Patch, PatchParams},
     runtime::{controller::Action, watcher::Config, Controller},
-    Api, Resource,
+    Api,
 };
 use tracing::{error, info};
 
 use crate::{
-    common::client::{error_policy, ContextData, Error},
+    common::{
+        client::{error_policy, ContextData, Error},
+        helper::string_to_bool,
+    },
     crds::nimble::Nimble,
-    transformers::ingress::transform_rules,
+    transformers::ingress::transform_ingress,
 };
 
 use tokio::time::Duration;
@@ -44,29 +47,11 @@ static DOES_ING_EXIST: AtomicBool = AtomicBool::new(false);
 pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Action, Error> {
     match nimble.spec.ingress.clone() {
         // Execution will go to this block only if ingress is mentioned in the object manifest.
-        Some(ing) => {
+        Some(_ing) => {
             let client = &ctx.client;
+            let is_dry_run = string_to_bool(std::env::var("DRY_RUN").unwrap_or("false".to_owned()));
 
-            let oref = nimble.controller_owner_ref(&()).unwrap();
-
-            let ingress: Ingress = Ingress {
-                metadata: ObjectMeta {
-                    annotations: ing.annotations,
-                    owner_references: Some(vec![oref]),
-                    name: nimble.metadata.name.clone(),
-                    ..ObjectMeta::default()
-                },
-                spec: Some(IngressSpec {
-                    ingress_class_name: ing.class,
-                    rules: transform_rules(
-                        ing.rules.clone(),
-                        nimble.metadata.name.clone().unwrap(),
-                    ),
-                    ..IngressSpec::default()
-                }),
-                ..Ingress::default()
-            };
-
+            let ingress = transform_ingress(nimble.clone(), is_dry_run);
             let ingress_api = Api::<Ingress>::namespaced(
                 client.clone(),
                 nimble
@@ -75,6 +60,32 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
                     .as_ref()
                     .ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
             );
+
+            if is_dry_run {
+                let _ = PatchParams {
+                    dry_run: true,
+                    ..PatchParams::default()
+                };
+                let params = PatchParams::apply("nimble.ivaltryek.github.com");
+                let patch = Patch::Apply(&ingress);
+
+                match ingress_api
+                    .patch(nimble.metadata.name.as_ref().unwrap(), &params, &patch)
+                    .await
+                {
+                    Ok(mut ingress) => {
+                        // Set None to unnecessary fields for brevity.
+                        ingress.metadata.managed_fields = None;
+                        ingress.status = None;
+                        let yaml = serde_yaml::to_string(&ingress).unwrap();
+                        println!("---\n# ingress.yaml\n\n{}", yaml);
+                    }
+                    Err(e) => {
+                        error!("{:?}", e);
+                    }
+                }
+                return Ok(Action::await_change());
+            }
 
             ingress_api
                 .patch(
@@ -123,6 +134,7 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
  *   - On error: logs an error message with details.
  * 5. Waits for the loop to complete.
  */
+#[allow(dead_code)]
 pub async fn run_ing_controller(crd_api: Api<Nimble>, context: Arc<ContextData>) {
     Controller::new(crd_api.clone(), Config::default())
         .shutdown_on_signal()

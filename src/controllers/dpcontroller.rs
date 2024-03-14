@@ -1,27 +1,22 @@
 use std::sync::Arc;
 
-use k8s_openapi::{
-    api::{
-        apps::v1::{Deployment, DeploymentSpec},
-        core::v1::{PodSpec, PodTemplateSpec},
-    },
-    apimachinery::pkg::apis::meta::v1::LabelSelector,
-};
+use k8s_openapi::{api::apps::v1::Deployment, Metadata};
 use kube::{
-    api::{ObjectMeta, Patch, PatchParams},
+    api::{Patch, PatchParams},
     runtime::{controller::Action, watcher::Config, Controller},
-    Api, Resource,
+    Api,
 };
 
-use crate::crds::nimble::Nimble;
+use crate::{
+    common::helper::string_to_bool, crds::nimble::Nimble,
+    transformers::deployment::transform_deployment,
+};
 
 use crate::common::client::{error_policy, ContextData, Error};
 
 use tokio::time::Duration;
 
 use futures::StreamExt;
-
-use crate::transformers::deployment::transform_containers;
 
 use tracing::{error, info};
 
@@ -44,41 +39,11 @@ use tracing::{error, info};
  * - Returns an Error::NimbleObjectCreationFailed if the creation or update of the Nimble object fails.
  */
 pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Action, Error> {
+    // setting up env for dry_run usecase.
+    let is_dry_run = string_to_bool(std::env::var("DRY_RUN").unwrap_or("false".to_owned()));
     let client = &ctx.client;
 
-    let oref = nimble.controller_owner_ref(&()).unwrap();
-
-    let labels = &nimble.spec.deployment.labels;
-
-    let containers = transform_containers(nimble.spec.deployment.containers.clone());
-
-    let deployment: Deployment = Deployment {
-        metadata: ObjectMeta {
-            name: nimble.metadata.name.clone(),
-            owner_references: Some(vec![oref]),
-            annotations: nimble.spec.deployment.annotations.clone(),
-            ..ObjectMeta::default()
-        },
-        spec: Some(DeploymentSpec {
-            selector: LabelSelector {
-                match_expressions: None,
-                match_labels: Some(labels.clone()),
-            },
-            template: PodTemplateSpec {
-                spec: Some(PodSpec {
-                    containers,
-                    ..PodSpec::default()
-                }),
-                metadata: Some(ObjectMeta {
-                    labels: Some(labels.clone()),
-                    annotations: nimble.spec.deployment.annotations.clone(),
-                    ..ObjectMeta::default()
-                }),
-            },
-            ..DeploymentSpec::default()
-        }),
-        ..Deployment::default()
-    };
+    let deployment: Deployment = transform_deployment(nimble.clone(), is_dry_run);
 
     let deployment_api = Api::<Deployment>::namespaced(
         client.clone(),
@@ -88,6 +53,35 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
             .as_ref()
             .ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
     );
+
+    if is_dry_run {
+        let _ = PatchParams {
+            dry_run: true,
+            ..PatchParams::default()
+        };
+        let params = PatchParams::apply("nimble.ivaltryek.github.com");
+        let patch = Patch::Apply(&deployment);
+        match deployment_api
+            .patch(
+                deployment.metadata().name.as_ref().unwrap(),
+                &params,
+                &patch,
+            )
+            .await
+        {
+            Ok(mut dp) => {
+                // Set None to unnecessary fields for brevity.
+                dp.metadata.managed_fields = None;
+                dp.status = None;
+                let yaml = serde_yaml::to_string(&dp).unwrap();
+                println!("---\n# deployment.yaml\n\n{}", yaml);
+            }
+            Err(e) => {
+                error!("{:?}", e);
+            }
+        }
+        return Ok(Action::await_change());
+    }
 
     deployment_api
         .patch(
@@ -126,6 +120,7 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
  *   - On error: logs an error message with details.
  * 5. Waits for the loop to complete.
  */
+#[allow(dead_code)]
 pub async fn run_dp_controller(crd_api: Api<Nimble>, context: Arc<ContextData>) {
     Controller::new(crd_api.clone(), Config::default())
         .shutdown_on_signal()

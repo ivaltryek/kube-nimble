@@ -3,18 +3,21 @@ use std::sync::{
     Arc,
 };
 
-use k8s_openapi::api::core::v1::{Service, ServiceSpec};
+use k8s_openapi::api::core::v1::Service;
 use kube::{
-    api::{ObjectMeta, Patch, PatchParams},
+    api::{Patch, PatchParams},
     runtime::{controller::Action, watcher::Config, Controller},
-    Api, Resource,
+    Api,
 };
 use tracing::{error, info};
 
 use crate::{
-    common::client::{error_policy, ContextData, Error},
+    common::{
+        client::{error_policy, ContextData, Error},
+        helper::string_to_bool,
+    },
     crds::nimble::Nimble,
-    transformers::service::transform_ports,
+    transformers::service::transform_svc,
 };
 
 use tokio::time::Duration;
@@ -48,29 +51,11 @@ static DOES_SVC_EXIST: AtomicBool = AtomicBool::new(false);
 pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Action, Error> {
     match nimble.spec.service.clone() {
         // Execution will go to this block only if service is mentioned in the object manifest.
-        Some(svc) => {
+        Some(_svc) => {
             let client = &ctx.client;
+            let is_dry_run = string_to_bool(std::env::var("DRY_RUN").unwrap_or("false".to_owned()));
 
-            let oref = nimble.controller_owner_ref(&()).unwrap();
-
-            let selector = Some(nimble.spec.deployment.labels.clone());
-
-            let service: Service = Service {
-                metadata: ObjectMeta {
-                    name: nimble.metadata.name.clone(),
-                    annotations: svc.annotations,
-                    owner_references: Some(vec![oref]),
-                    ..ObjectMeta::default()
-                },
-                spec: Some(ServiceSpec {
-                    type_: svc.type_,
-                    selector,
-                    ports: transform_ports(svc.ports),
-                    ..ServiceSpec::default()
-                }),
-                ..Service::default()
-            };
-
+            let service = transform_svc(nimble.clone(), is_dry_run);
             let service_api = Api::<Service>::namespaced(
                 client.clone(),
                 nimble
@@ -79,6 +64,31 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
                     .as_ref()
                     .ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
             );
+
+            if is_dry_run {
+                let _ = PatchParams {
+                    dry_run: true,
+                    ..PatchParams::default()
+                };
+                let params = PatchParams::apply("nimble.ivaltryek.github.com");
+                let patch = Patch::Apply(&service);
+                match service_api
+                    .patch(nimble.metadata.name.as_ref().unwrap(), &params, &patch)
+                    .await
+                {
+                    Ok(mut service) => {
+                        // Set None to unnecessary fields for brevity.
+                        service.metadata.managed_fields = None;
+                        service.status = None;
+                        let yaml = serde_yaml::to_string(&service).unwrap();
+                        println!("---\n# service.yaml\n\n{}", yaml);
+                    }
+                    Err(e) => {
+                        error!("{:?}", e);
+                    }
+                }
+                return Ok(Action::await_change());
+            }
 
             service_api
                 .patch(
@@ -127,6 +137,7 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
  *   - On error: logs an error message with details.
  * 5. Waits for the loop to complete.
  */
+#[allow(dead_code)]
 pub async fn run_svc_controller(crd_api: Api<Nimble>, context: Arc<ContextData>) {
     Controller::new(crd_api.clone(), Config::default())
         .shutdown_on_signal()
