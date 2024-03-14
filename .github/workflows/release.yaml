@@ -64,6 +64,7 @@ jobs:
       - name: generate crd manifest
         run: |
           target/${{ matrix.target }}/release/crdgen > nimble.ivaltryek.github.com.yaml
+        if: ${{ matrix.target == 'x86_64-unknown-linux-musl'}}
       - name: create release
         uses: softprops/action-gh-release@v2
         with:
