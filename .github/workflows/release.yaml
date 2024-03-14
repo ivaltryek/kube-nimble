@@ -67,6 +67,7 @@ jobs:
           args: --no-build --no-strip --output=. --target=${{ matrix.target }}
       - name: Package (*nix)
         run: |
+          ls -la /target/${{ matrix.target }}/release
           tar -cv LICENSE README.md target/${{ matrix.target }}/release/nmexport nmexport |
             gzip --best > \
             nmexport-${{ steps.get_version.outputs.value }}-${{ matrix.target }}.tar.gz
