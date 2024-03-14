@@ -1,6 +1,6 @@
 [package]
 name = "kube-nimble"
-version = "0.7.1"
+version = "0.7.2"
 edition = "2021"
 authors = ["Meet Vasani <meet.vasani86@gmail.com>"]
 
@@ -8,6 +8,9 @@ authors = ["Meet Vasani <meet.vasani86@gmail.com>"]
 name = "crdgen"
 path = "src/crdgen.rs"
 
+[[bin]]
+name = "nmexport"
+path = "src/nmexport.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -32,3 +35,4 @@ thiserror = "1"
 
 tracing = "0.1.36"
 tracing-subscriber = "0.3.3"
+clap = { version = "4.5.2", features = ["derive"] }

@@ -54,22 +54,4 @@ jobs:
             org.opencontainers.image.version=${{env.TAG_NAME}}
           annotations: |
             org.opencontainers.image.description=Rust based Kubernetes Operator to deploy K8s objects minimally.
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-      - name: cargo build
-        run: |
-          cargo build --release --all-features
-      - name: generate CRD spec
-        run: |
-          mkdir -p crdspec
-          chmod +x target/release/crdgen
-          target/release/crdgen > crdspec/nimble.ivaltryek.github.com.yaml
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: crdspec/*
-          draft: true
-          fail_on_unmatched_files: true
-
 

@@ -1,11 +1,14 @@
+use std::sync::Arc;
+
 use k8s_openapi::api::networking::v1::{
-    HTTPIngressPath, HTTPIngressRuleValue, IngressBackend, IngressRule, IngressServiceBackend,
-    ServiceBackendPort,
+    HTTPIngressPath, HTTPIngressRuleValue, Ingress, IngressBackend, IngressRule,
+    IngressServiceBackend, IngressSpec, ServiceBackendPort,
 };
+use kube::{api::ObjectMeta, Resource};
 
-use crate::crds::ingspec::RuleSpec;
+use crate::crds::{ingspec::RuleSpec, nimble::Nimble};
 
-pub fn transform_rules(
+fn transform_rules(
     rules_spec: Option<Vec<RuleSpec>>,
     svc_name: String,
 ) -> Option<Vec<IngressRule>> {
@@ -37,4 +40,32 @@ pub fn transform_rules(
         }
         _ => None,
     }
+}
+
+pub fn transform_ingress(nimble: Arc<Nimble>, is_dry_run: bool) -> Ingress {
+    let ing_spec = nimble.spec.ingress.clone().unwrap();
+    let ingress: Ingress = Ingress {
+        metadata: if is_dry_run {
+            ObjectMeta {
+                name: nimble.metadata.name.clone(),
+                annotations: ing_spec.annotations,
+                ..ObjectMeta::default()
+            }
+        } else {
+            let oref = nimble.controller_owner_ref(&()).unwrap();
+            ObjectMeta {
+                name: nimble.metadata.name.clone(),
+                owner_references: Some(vec![oref]),
+                annotations: ing_spec.annotations,
+                ..ObjectMeta::default()
+            }
+        },
+        spec: Some(IngressSpec {
+            ingress_class_name: ing_spec.class,
+            rules: transform_rules(ing_spec.rules, nimble.metadata.name.clone().unwrap()),
+            ..IngressSpec::default()
+        }),
+        ..Ingress::default()
+    };
+    ingress
 }

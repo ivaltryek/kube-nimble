@@ -3,20 +3,21 @@ use std::sync::{
     Arc,
 };
 
-use k8s_openapi::api::autoscaling::v2::{
-    CrossVersionObjectReference, HorizontalPodAutoscaler, HorizontalPodAutoscalerSpec,
-};
+use k8s_openapi::api::autoscaling::v2::HorizontalPodAutoscaler;
 use kube::{
-    api::{ObjectMeta, Patch, PatchParams},
+    api::{Patch, PatchParams},
     runtime::{controller::Action, watcher::Config, Controller},
-    Api, Resource,
+    Api,
 };
 use tracing::{error, info};
 
 use crate::{
-    common::client::{error_policy, ContextData, Error},
+    common::{
+        client::{error_policy, ContextData, Error},
+        helper::string_to_bool,
+    },
     crds::nimble::Nimble,
-    transformers::hpa::transform_metrics,
+    transformers::hpa::transform_hpa,
 };
 
 use futures::StreamExt;
@@ -44,32 +45,11 @@ static DOES_HPA_EXIST: AtomicBool = AtomicBool::new(false);
  */
 pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Action, Error> {
     match nimble.spec.hpa.clone() {
-        Some(hpa_spec) => {
+        Some(_hpa_spec) => {
             let client = &ctx.client;
+            let is_dry_run = string_to_bool(std::env::var("DRY_RUN").unwrap_or("false".to_owned()));
 
-            let oref = nimble.controller_owner_ref(&()).unwrap();
-
-            let hpa: HorizontalPodAutoscaler = HorizontalPodAutoscaler {
-                metadata: ObjectMeta {
-                    annotations: hpa_spec.annotations.clone(),
-                    owner_references: Some(vec![oref]),
-                    name: nimble.metadata.name.clone(),
-                    ..ObjectMeta::default()
-                },
-                spec: Some(HorizontalPodAutoscalerSpec {
-                    max_replicas: hpa_spec.max,
-                    min_replicas: hpa_spec.min,
-                    scale_target_ref: CrossVersionObjectReference {
-                        api_version: Some("apps/v1".to_owned()),
-                        kind: "Deployment".to_owned(),
-                        name: nimble.metadata.name.clone().unwrap(),
-                    },
-                    metrics: transform_metrics(nimble.spec.hpa.clone()),
-                    ..HorizontalPodAutoscalerSpec::default()
-                }),
-                ..HorizontalPodAutoscaler::default()
-            };
-
+            let hpa = transform_hpa(nimble.clone(), is_dry_run);
             let hpa_api = Api::<HorizontalPodAutoscaler>::namespaced(
                 client.clone(),
                 nimble
@@ -78,6 +58,31 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
                     .as_ref()
                     .ok_or_else(|| Error::MissingObjectKey(".metadata.namespace"))?,
             );
+
+            if is_dry_run {
+                let _ = PatchParams {
+                    dry_run: true,
+                    ..PatchParams::default()
+                };
+                let params = PatchParams::apply("nimble.ivaltryek.github.com");
+                let patch = Patch::Apply(&hpa);
+                match hpa_api
+                    .patch(nimble.metadata.name.as_ref().unwrap(), &params, &patch)
+                    .await
+                {
+                    Ok(mut hpa) => {
+                        // Set None to unnecessary fields for brevity.
+                        hpa.metadata.managed_fields = None;
+                        hpa.status = None;
+                        let yaml = serde_yaml::to_string(&hpa).unwrap();
+                        println!("---\n# hpa.yaml\n\n{}", yaml);
+                    }
+                    Err(e) => {
+                        error!("{:?}", e);
+                    }
+                }
+                return Ok(Action::await_change());
+            }
 
             hpa_api
                 .patch(
@@ -123,6 +128,7 @@ pub async fn reconcile(nimble: Arc<Nimble>, ctx: Arc<ContextData>) -> Result<Act
  *   - On error: logs an error message with details.
  * 5. Waits for the loop to complete.
  */
+#[allow(dead_code)]
 pub async fn run_hpa_controller(crd_api: Api<Nimble>, context: Arc<ContextData>) {
     Controller::new(crd_api.clone(), Config::default())
         .shutdown_on_signal()

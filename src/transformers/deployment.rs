@@ -1,17 +1,27 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, sync::Arc};
 
 use k8s_openapi::{
-    api::core::v1::{
-        ConfigMapEnvSource, Container, EnvFromSource, EnvVar, ExecAction, HTTPGetAction, Probe,
-        ResourceRequirements, SecretEnvSource, TCPSocketAction,
+    api::{
+        apps::v1::{Deployment, DeploymentSpec},
+        core::v1::{
+            ConfigMapEnvSource, Container, EnvFromSource, EnvVar, ExecAction, HTTPGetAction,
+            PodSpec, PodTemplateSpec, Probe, ResourceRequirements, SecretEnvSource,
+            TCPSocketAction,
+        },
     },
-    apimachinery::pkg::{api::resource::Quantity, util::intstr::IntOrString},
+    apimachinery::pkg::{
+        api::resource::Quantity, apis::meta::v1::LabelSelector, util::intstr::IntOrString,
+    },
+};
+use kube::{api::ObjectMeta, Resource};
+
+use crate::crds::{
+    deploymentspec::{ContainerSpec, EnvFromSpec, EnvSpec, ProbeSpec, ResourceSpec},
+    nimble::Nimble,
 };
 
-use crate::crds::deploymentspec::{ContainerSpec, EnvFromSpec, EnvSpec, ProbeSpec, ResourceSpec};
-
 // Transform envFrom field values to acceptable structure.
-pub fn transform_env_from(env_from_vec: Option<Vec<EnvFromSpec>>) -> Option<Vec<EnvFromSource>> {
+fn transform_env_from(env_from_vec: Option<Vec<EnvFromSpec>>) -> Option<Vec<EnvFromSource>> {
     match env_from_vec {
         Some(env_from) => {
             let mut env_from_vars = Vec::new();
@@ -58,7 +68,7 @@ pub fn transform_env_from(env_from_vec: Option<Vec<EnvFromSpec>>) -> Option<Vec<
 }
 
 // Transform env field values to acceptable structure.
-pub fn transform_envs(env_vec: Option<Vec<EnvSpec>>) -> Option<Vec<EnvVar>> {
+fn transform_envs(env_vec: Option<Vec<EnvSpec>>) -> Option<Vec<EnvVar>> {
     match env_vec {
         Some(env) => {
             let mut env_vars = Vec::new();
@@ -78,9 +88,7 @@ pub fn transform_envs(env_vec: Option<Vec<EnvSpec>>) -> Option<Vec<EnvVar>> {
 
 // Transform resources passed in manifest; This function converts given cpu, memory to
 // Option<BTreeMap<String, Quantity>>
-pub fn transform_resources(
-    resource_spec: &Option<ResourceSpec>,
-) -> Option<BTreeMap<String, Quantity>> {
+fn transform_resources(resource_spec: &Option<ResourceSpec>) -> Option<BTreeMap<String, Quantity>> {
     match resource_spec {
         Some(spec) => match (spec.cpu.clone(), spec.memory.clone()) {
             // case when both cpu and memory are provided.
@@ -101,7 +109,7 @@ pub fn transform_resources(
 }
 
 // Transform probes passed in manifest. i.e liveness, readiness, startup.
-pub fn transform_probe(probe_type: &Option<ProbeSpec>) -> Option<Probe> {
+fn transform_probe(probe_type: &Option<ProbeSpec>) -> Option<Probe> {
     // initialise default &ProbeSpec if probe_type is not None.
     // Meaning, that any of the probes were passed to the configuration.
     match probe_type {
@@ -156,7 +164,7 @@ pub fn transform_probe(probe_type: &Option<ProbeSpec>) -> Option<Probe> {
 /// Returns Vec of `Container`.
 /// # Arguments
 /// * `container_spec` - A Vec of `ContainerSpec`
-pub fn transform_containers(container_spec: Vec<ContainerSpec>) -> Vec<Container> {
+fn transform_containers(container_spec: Vec<ContainerSpec>) -> Vec<Container> {
     let containers: Vec<Container> = container_spec
         .iter()
         .map(|spec| -> Container {
@@ -185,4 +193,49 @@ pub fn transform_containers(container_spec: Vec<ContainerSpec>) -> Vec<Container
         .collect();
 
     containers
+}
+
+pub fn transform_deployment(nimble: Arc<Nimble>, is_dry_run: bool) -> Deployment {
+    let deploy_spec = nimble.spec.deployment.clone();
+    let labels = &nimble.spec.deployment.labels;
+    let containers = transform_containers(nimble.spec.deployment.containers.clone());
+
+    let deployment: Deployment = Deployment {
+        metadata: if is_dry_run {
+            ObjectMeta {
+                name: nimble.metadata.name.clone(),
+                annotations: deploy_spec.annotations,
+                ..ObjectMeta::default()
+            }
+        } else {
+            let oref = nimble.controller_owner_ref(&()).unwrap();
+            ObjectMeta {
+                name: nimble.metadata.name.clone(),
+                owner_references: Some(vec![oref]),
+                annotations: deploy_spec.annotations,
+                ..ObjectMeta::default()
+            }
+        },
+        spec: Some(DeploymentSpec {
+            selector: LabelSelector {
+                match_expressions: None,
+                match_labels: Some(labels.clone()),
+            },
+            template: PodTemplateSpec {
+                spec: Some(PodSpec {
+                    containers,
+                    ..PodSpec::default()
+                }),
+                metadata: Some(ObjectMeta {
+                    labels: Some(labels.clone()),
+                    annotations: nimble.spec.deployment.annotations.clone(),
+                    ..ObjectMeta::default()
+                }),
+            },
+            ..DeploymentSpec::default()
+        }),
+        ..Deployment::default()
+    };
+
+    deployment
 }

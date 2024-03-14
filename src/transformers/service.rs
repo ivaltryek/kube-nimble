@@ -1,8 +1,14 @@
-use k8s_openapi::{api::core::v1::ServicePort, apimachinery::pkg::util::intstr::IntOrString};
+use std::sync::Arc;
 
-use crate::crds::servicespec::PortSpec;
+use k8s_openapi::{
+    api::core::v1::{Service, ServicePort, ServiceSpec},
+    apimachinery::pkg::util::intstr::IntOrString,
+};
+use kube::{api::ObjectMeta, Resource};
 
-pub fn transform_ports(ports_vec: Option<Vec<PortSpec>>) -> Option<Vec<ServicePort>> {
+use crate::crds::{nimble::Nimble, servicespec::PortSpec};
+
+fn transform_ports(ports_vec: Option<Vec<PortSpec>>) -> Option<Vec<ServicePort>> {
     match ports_vec {
         Some(ports) => {
             let mut result_vec = Vec::new();
@@ -20,4 +26,33 @@ pub fn transform_ports(ports_vec: Option<Vec<PortSpec>>) -> Option<Vec<ServicePo
         }
         _ => None,
     }
+}
+
+pub fn transform_svc(nimble: Arc<Nimble>, is_dry_run: bool) -> Service {
+    let svc_spec = nimble.spec.service.clone().unwrap();
+    let service: Service = Service {
+        metadata: if is_dry_run {
+            ObjectMeta {
+                name: nimble.metadata.name.clone(),
+                annotations: svc_spec.annotations,
+                ..ObjectMeta::default()
+            }
+        } else {
+            let oref = nimble.controller_owner_ref(&()).unwrap();
+            ObjectMeta {
+                name: nimble.metadata.name.clone(),
+                owner_references: Some(vec![oref]),
+                annotations: svc_spec.annotations,
+                ..ObjectMeta::default()
+            }
+        },
+        spec: Some(ServiceSpec {
+            type_: svc_spec.type_,
+            selector: svc_spec.selector,
+            ports: transform_ports(svc_spec.ports),
+            ..ServiceSpec::default()
+        }),
+        ..Service::default()
+    };
+    service
 }
