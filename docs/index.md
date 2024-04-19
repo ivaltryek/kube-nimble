@@ -17,3 +17,4 @@ Below are the different versions of Custom Resource Definitions:
 - [v0.7.0](./v0.7.0.md)
 - [v0.7.1](./v0.7.1.md)
 - [v0.7.2](./v0.7.2.md)
+- [v0.7.3](./v0.7.3.md)
